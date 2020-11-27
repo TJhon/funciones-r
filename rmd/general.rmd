@@ -24,9 +24,19 @@ df1 %>%
 
 ## Contexutales de la persona
 
-- edad (histograma)
 
 ```{r}
+df1 %>% 
+  me_fiter(c("edad")) %>% 
+  select(!c(id, variable)) %>% 
+  mutate(rango = cut_width(value, 6)) %>% 
+  group_by(Distrito) %>% 
+  count(rango) %>% 
+  mutate(por = round(n / sum(n) * 100, 2), 
+         por1 = paste0(por, "%")) %>% 
+  select(!c(n, por)) %>% 
+  pivot_wider(names_from = Distrito, values_from = por1) 
+
 df1 %>% 
   me_fiter(c("edad")) %>% 
   ggplot() +
