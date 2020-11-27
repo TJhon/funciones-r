@@ -65,7 +65,8 @@ b_plot <- function(df){
     aes(value, Porcentaje, fill = value) +
     geom_col() +
     labs(x = "") +
-    coord_flip() 
+    coord_flip() +
+    facet_wrap(~Distrito, scales = "free_x", ncol = 2)
     
     
     #geom_tech() +
@@ -75,11 +76,30 @@ b_plot <- function(df){
 t_plot <- function(df){
   ggplot(df) + 
     theme_bw() +
-    theme(legend.position = "none") +
+    theme(legend.position = "bottom") +
     labs(x = "") +
     labs(title = "None") +
-    aes(area = n, fill = value) +
-    geom_treemap(color = "white", size = 2) 
+    aes(area = n, fill = value, label = tree_label) +
+    geom_treemap(color = "white", size = 2) +
+    facet_wrap(~Distrito, ncol = 2, scales = "free") +
+    geom_treemap_text(fontface = "italic", colour = "white", place = "centre",
+                      grow = TRUE)
+}
+
+t_vari <- function(df, t = TRUE){
+  t = as.logical(t)
+  df %>% 
+  select(!c(name, variable, n, Porcentaje, tree_label)) %>% 
+  pivot_wider(names_from = value, values_from = por) %>% 
+    knitr::kable()
+  
+}
+
+me_fiter <- function(df, var = c()){
+  df %>% 
+    filter(name %in% var) %>% 
+    select(!name) %>% 
+    mutate(value = parse_number(value))
 }
 
 
@@ -88,10 +108,7 @@ df1 %>%
   bind_rows(df1) %>% 
   #filter(Distrito == "Chilca")
   vari("t", "satisfaccion")  %>% 
-  b_plot() +
-  facet_wrap(~Distrito, scales = "free_x", ncol = 2)
-  select(!c(name, variable, n, Porcentaje, tree_label)) %>% 
-  pivot_wider(names_from = value, values_from = por)
+  b_plot() 
 
   
 

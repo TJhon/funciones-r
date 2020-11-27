@@ -1,0 +1,356 @@
+---
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r, include=F}
+source(here::here("code", "pkg.r"))
+source(here::here("code", "datos.r"))
+source(here::here("code", "fun.r"))
+tab = FALSE
+df1 %>% 
+  filter(str_detect(name, "covid")) %>% 
+  count(name)
+df1 %>% 
+  filter(str_detect(name, "gasto")) %>% 
+  count(variable)
+```
+
+
+
+# Analisis univariado
+
+## Contexutales de la persona
+
+- edad (histograma)
+
+```{r}
+df1 %>% 
+  me_fiter(c("edad")) %>% 
+  ggplot() +
+  aes(x = value, fill = Distrito) +#, y = ..density..) +
+  geom_histogram() +
+  facet_wrap(~Distrito, ncol = 2, scales = "free")
+```
+
+
+- genero (bar)
+
+```{r}
+df1 %>% 
+  vari(var = "genero") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "genero") %>% 
+  b_plot()
+
+
+```
+
+
+- idiomas (tree)
+
+```{r}
+df1 %>% 
+  vari(var = "idiomas") %>% 
+  filter(value != "0") %>% 
+  t_vari()
+
+df1 %>% 
+  vari(var = "idiomas") %>% 
+  filter(value != "0") %>% 
+  t_plot() 
+
+```
+
+- sentimiento_serguridad (bar)
+
+```{r}
+df1 %>% 
+  vari(var = "sentimiento_serguridad") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "sentimiento_serguridad") %>% 
+  b_plot()
+```
+
+
+- satisfaccion (bar)
+
+```{r}
+df1 %>% 
+  vari(var = "satisfaccion") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "satisfaccion") %>% 
+  b_plot()
+```
+
+
+## servicios
+
+### Servicios recibidos
+
+-- facet_wrap
+
+Los servicios de los encuestados 
+
+```{r}
+ser <- df1 %>% 
+  filter(str_detect(name, "ser|muni")) %>% 
+  filter(!str_detect(name, "cal_ser")) %>% 
+  group_by(Distrito, variable) %>% 
+  count(value) %>% 
+  mutate(por = round(n / sum(n)*100, 2), 
+         porcentaje = paste0(por, "%")) %>% 
+  ungroup()
+
+ser %>% 
+  select(!c(n, por)) %>% 
+  #group_by()
+  pivot_wider( names_from = value, values_from = porcentaje)
+
+```
+
+
+
+### Calidad de los servicios recibidos
+
+- filtrar por los que reciben
+- ~facet_grid(distrito)
+
+```{r}
+calidad <- df1 %>% 
+  filter(str_detect(name, "cal_")) %>% 
+  group_by(Distrito, variable) %>% 
+  count(value) %>% 
+  filter(value != 0) %>% 
+  mutate(por = round(n / sum(n)*100, 2), 
+         porcentaje = paste0(por, "%")) %>% 
+  ungroup()
+
+calidad %>% 
+  select(!c(n, por)) %>% 
+  mutate(porcentaje = replace_na(porcentaje, "0%")) %>% 
+  #group_by()
+  pivot_wider( names_from = value, values_from = porcentaje)
+  
+```
+
+
+
+## Tiempo
+
+bar chart ramas o tal vez 
+
+-- correguir la base de datos si hay tiempo', mejor es un case)when
+
+
+## Vivienda
+
+```
+las variables de metros cuadrados precios de los mismos tienen valores anormales en mi opinion
+```
+
+
+```{r}
+vivien <- df1 %>% 
+  filter(str_detect(variable, "Numero")) %>% 
+  filter(str_detect(name, "vivienda")) %>% 
+  mutate(value = parse_number(value)) %>% 
+  group_by(Distrito, variable) %>% 
+  count(value) %>% 
+  #group_by(Distrito, variable) %>% 
+  mutate(por = round(n / sum(n) * 100, 2), 
+         por1 = paste0(por, "%"))
+
+vivien %>% 
+  select(!c(n, por)) %>% 
+  pivot_wider(names_from = value, values_from = por1)
+
+
+vivien %>% 
+  mutate(value = factor(value)) %>% 
+  ggplot() +
+  geom_col() +
+  aes(value, por, fill = value) +
+  facet_wrap(~Distrito, ncol = 2) +
+  coord_flip()
+```
+
+
+
+## Gasto (gasto total)
+
+```{r}
+gasto <- df1 %>% 
+  filter(str_detect(name, "gasto")) %>% 
+  select(!c(id, name)) %>% 
+  mutate(value = parse_number(value))
+
+gasto %>% 
+  ggplot() +
+  aes(value) +
+  geom_histogram(aes(y = ..density..)) +
+  geom_density()
+
+```
+
+
+## Al rededores
+
+```{r}
+alr <- df1 %>% 
+  filter(str_detect(name, "alr")) %>% 
+  select(!c(id, name)) %>% 
+  group_by(Distrito, variable) %>% 
+  count(value) %>% 
+  mutate(Porcentaje = round(n / sum(n) *100, 2), 
+         por1 = paste0(Porcentaje, "%"))
+
+alr %>% 
+  select(!c(n, Porcentaje)) %>% 
+  pivot_wider(names_from = value, values_from = por1)
+
+
+
+alr %>% 
+  ungroup() %>% 
+  ggplot() + 
+  aes(value, Porcentaje) +
+  geom_col() +
+  facet_grid(Distrito~variable, scales = 'free') +
+  coord_flip()
+
+```
+
+
+## Familia
+
+
+```{r}
+df1 %>% 
+  vari(var = "jefe_ocu") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "jefe_ocu") %>% 
+  b_plot()
+```
+
+- jefe_ocu
+- hogar_ingresos_cuantos
+
+```{r}
+df1 %>% 
+  vari(var = "hogar_ingresos_cuantos") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "hogar_ingresos_cuantos") %>% 
+  b_plot()
+```
+
+```{r}
+fami <- df1 %>% 
+  filter(str_detect(name, "f_")) %>% 
+  select(!c(id, name)) %>% 
+  group_by(Distrito, variable) %>% 
+  count(value) %>% 
+  mutate(por = round(n / sum(n) * 100, 2),
+         por1 = paste0(por, "%")) %>% 
+  ungroup()
+fami %>% 
+  select(!c(n, por)) %>% 
+  pivot_wider(names_from = value, values_from = por1)
+## eliminar la parte de composicion familiar esto puede ir la descirripon de l titiulo de la figura
+fami
+
+fami %>% 
+  mutate(value = reorder(value, n)) %>% 
+  ggplot() +
+  aes(x = value, y = por, fill = value) +
+  geom_col() +
+  facet_wrap(~Distrito, ncol = 2) +
+  coord_flip() +
+  theme(legend.position = "none")
+
+```
+
+
+## Covid
+
+<!--datos de contagios a nivel distrital -->
+
+El efecto del covid en la poblacion del Distrito metropolitano de Huancayo de los cuales los distritos de Chilca, El Tambo tuvieron diferentes numeros de contagios, por *por ejemplo*, mientras que la encuesta realizada el entorno contextual muestra que la variable relacionada con los casos positivos (ver siguiente tabla). 
+
+El numero de contagios como proporccion del numero de contagios sobre el total de encuestados muestra que Chilca, tuvo 14.9% de los encuestados tuvieron COVID 19, en El tambo el porcentaje de contagios fue del 12.3% mientras que en el Distrito de Huancayo solo el 6.9% fueron casos positivos de COVID 19. Esto se puede visualizar mejor en el grafico subsiguiente donde se distingue
+
+```{r}
+df1 %>% 
+  vari(var = "covid_positivo") %>% 
+  t_vari()
+df1 %>% 
+  vari(var = "covid_positivo") %>% 
+  b_plot()
+```
+
+Mientras que el porcentaje de los encuestados que se hicieron la prueba para saber si tuvieron o no COVID 19 tuvo un comportamiento diferente al anterior, ya que en el distrito de Chilca el 38.1% de los encuestados afirmaron que se hicieron una prueba para saber si tenian o no COVID 19, mientras que el 61.9% no se hicieron ni recibieron ninguna prueba para detectar COVID 19, mientras que en distrito de El Tambo el porcentaje de los encuestados que se hicieron alguna prueba para saber si tuvieron COVID 19 solo el 33.1% afirmaron que si se hicieron en contraparte los que no se hicieron ninguna ni tampoco recibieron ninguna de las pruebas fueron el 66.9%. Por ultimo en el Distrito de Huancayo es el distrito del cual menos encuestados se hicieron la prueba para COVID 19 siendo el porcentaje de 29.9%, esto se puede visualizar de mejor manera en la subsiguiente figura.
+
+```{r}
+df1 %>% 
+  vari(var = "covid_prueba") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "covid_prueba") %>% 
+  b_plot()
+```
+ 
+Por otra parte el porcentaje de los encuestados que presentaron algunos sintomas de los caules son caracteristicos y que mediante estudios avalados por la OMS son propios del COVID 19, son tos congestion o secresion nasal, fatiga, perdidad de sentido del gusto o del olfato y dolor de cabeza o en el pecho, y mediante la encuesta en el distrito de Chilca tuvo el menor de casos con sintomas siendo este solo el 22.8%, en contraparte los que no presentaron sintomas fueron el 77.2%, mientras que el distrito de El Tambo el 23.6% presentaron estos sintomas mientras que el 76.4% no presentaron ninguno de estos sintomas. Por ultimo en el distrito de Huancayo el 25.7% el mayor a nivel distrital mostraron estos sintomas. mientras que el 74.3% de los encuestados no presentaron ninguno de los sintomas del COVID 19 (ver siguiente tabla y figura).
+
+```{r}
+df1 %>% 
+  vari(var = "covid_sintomas") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "covid_sintomas") %>% 
+  b_plot()
+```
+
+Por otra parte se sabe que el virus necesita de un portador humano para poder transmitirse algunos son asintomaticos (no presentan sintomas) y otros si presentan sintomas, y para poder recabar esta informmacion, se tuvieron 2 preguntas, la primera era si se conocia a alguien de la comunidad que estuviese enfermo de coronavirus (estuvo enfermo, tos, dificultad para respirar, etc.), y la segunda si hubo contacto con alguna persona la cual presentaba sintomas propios del coronavirus, por distritos se tiene que para los conocidos en los distritos de Chilca, El Tambo y Huancayo fueron de 69.8%, 68.4%, y 60.8% respectivamente, mientras que los contactos registrados con alguna persona sospechoza de COVID 19 fueron casi la tercera parte, siendo estas para los distritos de Chilca, El Tambo y Huancayo de 27.4% y 28%, y 29.5%, mostrando la preocupacion de tomar algo de distancia con las personas que presenta o presentaron sintomas.
+
+```{r}
+df1 %>% 
+  vari(var = "covid_conocido_sintomas") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "covid_conocido_sintomas") %>% 
+  b_plot()
+df1 %>% 
+  vari(var = "covid_contacto_sintomas") %>% 
+  t_vari
+df1 %>% 
+  vari(var = "covid_contacto_sintomas") %>% 
+  b_plot()
+```
+Asimismo exiten gastos destinados principalmente para prevenir y tratar el COVID 19, para prevenir se tiene la higiene como principal recurso, este puede comprender al uso de agua y jabon, desinfectantes de manos, mascarillas, protectores faciales entre otros, mientras que para el tratamiento, puede ser de la persona como tambien de la familia, y este comprende la adquision de medicamentos, gastos medicos, balones de oxigeno, los encuestados mostraron el siguiente comportamiento.
+
+
+### Esta  parte crear una funcion de histograma, y facet -1 col esto se repite para lo anteiror,
+ 
+pensado para estas variables
+
+- covid _ desempleo
+- covid_ drepsion
+- covid_conflictos
+
+
+
+
+
+
+
+
+# Analisis bivariado
+
+# Modelo econometrico

@@ -87,3 +87,5 @@ df1 <- df %>%
                               TRUE ~ paste0("falta_", name)
                               )) %>% 
   relocate(id, Distrito, name, variable, value) 
+df %>% 
+  count(Distrito, tiempo_comercial)
