@@ -1,0 +1,43 @@
+<!--
+- Analisis desriptivo de cada variables (univariado)
+        - tablas y figuras
+- analisis bivariado
+        - tablas y figuras
+- Distrito y general (todo lo anterior)
+- abordar temas generales de datos expuestos en otras fuentes
+
+
+
+
+- Indicadores por sectores y distritos (georeferenciacion)
+
+### otras taresas
+
+- datos -> volver a su formato origial si no etc
+
+
+-->
+
+
+
+# Analisis univariado
+
+## El Tambo
+
+
+
+## Huancayo
+
+## Chilca
+
+## Todas los distritos
+
+# Analisis bivariado
+
+## El Tambo
+
+## Huancayo
+
+## Chilca
+
+## Todas los distritos
