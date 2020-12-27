@@ -1,0 +1,363 @@
+---
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r, include=F}
+source(here::here("code", "pkg.r"))
+source(here::here("code", "datos.r"))
+source(here::here("code", "fun1.r"))
+
+knitr::opts_chunk$set(
+  results = 'asis', 
+  echo = F, 
+  include = F
+)
+
+```
+
+Para la transformacion de datos se tiene en cuenta lo siguiente:
+
+- Si se hace la transformaacion de forma de la variable satisfaccion [1-4] = 0 y [5-10] = 1, se tiene muy pocas observaciones para el primer caso
+- Para tratar de correguir eso se convirtio de la siguiente manera satisfaccion [1-5] = 0 y [6-10] = 1
+
+# Modelo
+
+```{r}
+options(scipen=999)
+
+round_df <- function(x, digits) {
+    # round all numeric variables
+    # x: data frame 
+    # digits: number of digits to round
+    numeric_columns <- sapply(x, mode) == 'numeric'
+    x[numeric_columns] <-  round(x[numeric_columns], digits)
+    x
+}
+
+df %>% 
+  count(Distrito)
+```
+
+
+
+```{r}
+head(df)
+df2 <- df %>% 
+  mutate(satisfaccion = case_when(satisfaccion <  6 ~ 0, 
+                                  satisfaccion >= 6 ~ 1), 
+         total_gasto = gasto_alimentos + gasto_vestido + gasto_diversion + gasto_edu + gasto_salud + gasto_transpor, 
+         ingreso_familiar = replace_na(ingreso_familiar, 1),
+         ingreso_familiar = case_when(ingreso_familiar == 0 ~ 1, TRUE ~ ingreso_familiar),
+         log_ingreso_familiar = log(ingreso_familiar),
+         log_gasto = log(case_when(total_gasto == 0~1, TRUE ~ total_gasto))
+         ) %>% 
+  select(!c(id, lugar_n, Distrito, zona, distrito, contains("gasto_")))
+df2 %>% glimpse()
+df2 %>% 
+  ggplot() + 
+  aes(ingreso_familiar,satisfaccion ) + geom_point() +
+  geom_smooth(method = "glm", 
+    method.args = list(family = "binomial"), 
+    se = FALSE)
+```
+
+```{r}
+names(df2)
+```
+
+## Logit 
+
+- Por el criterio de AIC es mejor usar el Logit
+
+```{r}
+forma <- "logit"
+```
+
+
+
+
+```{r}
+library(broom)
+library(kableExtra)
+
+mo <- satisfaccion ~ . #sentimiento_serguridad + servicio_agua + servicio_desague + servicio_electricidad + covid_muerte + idiomas
+
+esti1 <- glm(mo,
+  data = df2, binomial(link = forma))
+esti1 %>% 
+  tidy %>% 
+  round_df(3) %>% 
+  arrange(p.value)
+esti1 %>% 
+  glance()
+
+esti1 %>% summary
+```
+
+```{r, include=T}
+mo1 <- satisfaccion ~ sentimiento_serguridad + covid_prueba + covid_depresion + servicio_desague  + idiomas + ingreso_familiar + cal_servicio_basura + cal_servicio_seguridad +#covid_muerte + 
+  servicio_telefono + servicio_internet + 
+  #cal_servicio_internet + 
+  cal_servicio_electricidad + #servicio_agua + 
+  #covid_internados + 
+  f_hombre + f_mujer + ingreso_familiar + #tiempo_via_principal + 
+  alr_auxilio_rap + covid_tratar + vivienda_pisos + alr_parques_recreativas + alr_auxilio_rap  + log_gasto
+  #f_menor18, tiemmpo_via_principal, servicio agau acalidad covid (internados y muerte), 
+
+mo2 <- satisfaccion ~ sentimiento_serguridad + covid_prueba + covid_depresion + servicio_desague  + idiomas + ingreso_familiar + cal_servicio_basura + cal_servicio_seguridad +#covid_muerte + 
+  servicio_telefono + servicio_internet + 
+  #cal_servicio_internet + 
+  cal_servicio_electricidad + #servicio_agua + 
+  #covid_internados + 
+  f_hombre + f_mujer + ingreso_familiar + #tiempo_via_principal + 
+  alr_auxilio_rap + covid_tratar + vivienda_pisos + alr_parques_recreativas + alr_auxilio_rap  
+  
+
+
+modelo1 <- glm(mo1, data = df2, binomial(link = forma)) 
+modelo2 <- glm(mo2, data = df2, binomial(link = forma)) 
+
+stargazer::stargazer(modelo1, modelo2, no.space = T, header = F)
+
+```
+
+
+
+- En cambio agua (servicio y calidad no son significativos)
+- Ingreso familiar como logaritmo no es significativa y provoca que otras variables no sean significativas
+- Gasto total, no es significativo, pero si se toma logaritmo si lo es, esta ultima inclusion al modelo provoca que las variables servicio de internet y el numero de pisos de la vivienda no sean significativas al 5%
+
+\newpage
+
+## Probit 
+
+```{r}
+forma <- "probit"
+```
+
+
+Modelo con todas las variables
+
+
+```{r}
+library(broom)
+library(kableExtra)
+
+mo <- satisfaccion ~ . #sentimiento_serguridad + servicio_agua + servicio_desague + servicio_electricidad + covid_muerte + idiomas
+
+esti1 <- glm(mo,
+  data = df2, binomial(link = forma))
+esti1 %>% 
+  tidy %>% 
+  round_df(3) %>% 
+  arrange(p.value)
+esti1 %>% 
+  glance()
+
+esti1 %>% summary
+```
+
+```{r, include=T}
+mo1 <- satisfaccion ~ sentimiento_serguridad + covid_muerte + covid_depresion + servicio_desague  + idiomas + ingreso_familiar + cal_servicio_basura + cal_servicio_seguridad +#covid_muerte + 
+  servicio_telefono + servicio_internet + 
+  #cal_servicio_internet + 
+  cal_servicio_electricidad + #servicio_agua + 
+  #covid_internados + 
+  f_hombre + f_mujer + ingreso_familiar + #tiempo_via_principal + 
+  alr_auxilio_rap + covid_tratar + vivienda_pisos + alr_parques_recreativas + alr_auxilio_rap  + log_gasto
+  #f_menor18, tiemmpo_via_principal, servicio agau acalidad covid (internados y muerte), 
+
+mo2 <- satisfaccion ~ sentimiento_serguridad + covid_muerte + covid_depresion + servicio_desague  + idiomas + ingreso_familiar + cal_servicio_basura + cal_servicio_seguridad +#covid_muerte + 
+  servicio_telefono + servicio_internet + 
+  #cal_servicio_internet + 
+  cal_servicio_electricidad + #servicio_agua + 
+  #covid_internados + 
+  f_hombre + f_mujer + ingreso_familiar + #tiempo_via_principal + 
+  alr_auxilio_rap + covid_tratar + vivienda_pisos + alr_parques_recreativas + alr_auxilio_rap  
+  
+
+
+modelo1 <- glm(mo1, data = df2, binomial(link = forma)) 
+modelo2 <- glm(mo2, data = df2, binomial(link = forma)) 
+
+stargazer::stargazer(modelo1, modelo2, no.space = T, header = F)
+
+```
+
+Las mismas variables son significativas para un modelo probit
+
+## Modelos para los 3 distritos
+
+
+```{r}
+moi_filter <- function(df, var){
+  df %>% 
+    mutate(satisfaccion = case_when(satisfaccion <  6 ~ 0, 
+                                  satisfaccion >= 6 ~ 1), 
+         total_gasto = gasto_alimentos + gasto_vestido + gasto_diversion + gasto_edu + gasto_salud + gasto_transpor, 
+         ingreso_familiar = replace_na(ingreso_familiar, 1),
+         ingreso_familiar = case_when(ingreso_familiar == 0 ~ 1, TRUE ~ ingreso_familiar),
+         log_ingreso_familiar = log(ingreso_familiar),
+         log_gasto = log(case_when(total_gasto == 0~1, TRUE ~ total_gasto))
+         ) %>% 
+    filter(Distrito == case_when(var == "h" ~ "Huancayo",
+                                 var == "c" ~ "Chilca", 
+                                 var == "t" ~ "El Tambo"))
+}
+
+chilca <- df %>% 
+  moi_filter(var = "c")
+
+tambo <- df %>% 
+  moi_filter("t")
+hyo <- df %>% 
+  moi_filter("h")
+names(df)
+```
+
+```{r}
+model_chi <- satisfaccion ~ sentimiento_serguridad  + covid_desempleo +  servicio_agua + servicio_desague + 
+   cal_servicio_mant_parq + alr_calles_pavimentadas +  cal_servicio_telefono +
+   alr_parques_recreativas + alr_auxilio_rap  +
+   f_mujer +jefe_ocu + idiomas
+chi_1 <- glm(model_chi, data = chilca, binomial(link = "logit")) 
+```
+
+```{r}
+names(df)
+```
+
+```{r}
+model_tam <- satisfaccion ~ sentimiento_serguridad+covid_sintomas   +  covid_depresion+cal_servicio_desague+ 
+   cal_servicio_mant_parq + cal_servicio_electricidad+ servicio_desague   + muni_recojo_basura + f_hombre+jefe_ocu +  hogar_ingresos_cuantos  + genero
+tam_1 <- glm(model_tam, data = tambo, binomial(link = "logit")) 
+```
+
+```{r}
+names(df)
+```
+
+
+```{r}
+model_hyo <- satisfaccion ~ sentimiento_serguridad + covid_positivo + covid_depresion +  servicio_agua + cal_servicio_telefono + 
+  cal_servicio_desague + muni_recojo_basura  + alr_calles_pavimentadas + alr_auxilio_rap +  total_gasto+f_menor18 
+
+hyo_1 <- glm(model_hyo, data = hyo, binomial(link = "logit")) 
+```
+
+Por el Criterio de AIC, el modelo elegido es el de tipo Logit.
+
+```{r, include=T}
+stargazer::stargazer(hyo_1, chi_1, tam_1, no.space = T,  column.labels = c("Huancayo", "Chilca", "El Tambo"), single.row = T, title = "Modelos Logit", type = "html")
+```
+
+
+```{r}
+library(memisc)
+```
+
+```{r,include=T}
+mtable(hyo_1,summary.stats=c("Deviance","N"))
+```
+
+
+```{r}
+guardar_tidy <- function(obj, name = "name"){
+  a <- obj %>% 
+    tidy() %>% 
+    arrange(term, p.value) %>% 
+    round_df(4)
+  a %>% 
+    write_csv(here("excel", paste0(name,"_tidy", ".csv")))
+}
+guardar_glance <- function(obj, name = "name"){
+  a <- obj %>% 
+    glance() %>% 
+    #arrange(term, p.value) %>% 
+    round_df(4)
+  a %>% 
+    write_csv(here("excel", paste0(name, "g", ".csv")))
+}
+modelo1 %>% 
+  guardar_tidy("logit1")
+
+modelo2 %>% 
+  guardar_tidy("logit2")
+
+hyo_1 %>% 
+  guardar_glance("hyo")
+chi_1 %>% 
+  guardar_glance("chilca")
+tam_1 %>% 
+  guardar_glance("tam")
+
+```
+
+
+# Precios hedonicos
+
+```{r}
+df %>% names
+```
+
+
+```{r}
+df4 <- 
+  df %>% 
+  dplyr::select(Distrito, contains(c("alr", "ser", "viv", "cal", "tiempo"))) %>% 
+  mutate(l_vivienda_m2_precio = log(case_when(vivienda_m2_precio == 0 ~ 1,
+                                            TRUE ~ vivienda_m2_precio)),
+         l_vivienda_m2 = log(case_when(vivienda_m2 == 0 ~ 1,
+                                            TRUE ~ vivienda_m2)))
+names(df4)  
+```
+
+```{r}
+hedo1 <- vivienda_m2_precio ~ vivienda_m2
+lm(hedo1, data = df4) %>% 
+  glance
+
+ggplot(df4) + aes(vivienda_m2, vivienda_m2_precio, color = Distrito) + geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  facet_wrap(~Distrito, ncol = 2)
+```
+
+```{r}
+df4
+```
+
+```{r}
+names(df)
+```
+
+```{r}
+
+df4 %>% names
+lm(l_vivienda_m2_precio ~ . - vivienda_m2_precio - vivienda_m2 - Distrito, data = df4) %>% 
+  tidy %>% 
+  arrange(p.value, term)
+```
+
+```{r}
+gen <- l_vivienda_m2_precio ~ l_vivienda_m2 + cal_servicio_telefono + sentimiento_serguridad + 
+  cal_servicio_electricidad + cal_servicio_internet + cal_servicio_basura +
+  
+  #as.factor(Distrito) + 
+  alr_calles_pavimentadas 
+  #as.factor(vivienda_banos) + 
+  #servicio_agua + tiempo_aux_rap
+  
+
+lm(gen, data = df4) %>% 
+  tidy() %>% 
+  arrange(desc(p.value))
+```
+
+```{r}
+lm(gen, data = chilca) %>% 
+```
+
+

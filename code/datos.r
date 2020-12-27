@@ -6,23 +6,42 @@ source(here::here("code", "pkg.r"))
 
 df <- read_rds(here("dts", "df.rds"))
 
-
-gf <- function(df, d = "c", var = 1){
-  df %>% 
-    filter(Distrito == ifelse(d == "c", "Chilca",
-                              ifelse(d == "t", "El Tambo", "Huancayo"))) 
-  } 
-  
-
 df1 <- df %>% 
   select(!c(zona, lugar_n, distrito)) %>% 
   mutate(gasto = reduce(
     select(., contains("gasto")), `+`
   )) %>%
   select(!contains("gasto_")) %>% 
-  mutate_all(as.character) %>% 
   mutate(genero = case_when(genero == "1" ~ "Mujer",
-                            TRUE ~ "Hombre")) %>% 
+                            TRUE ~ "Hombre")) %>%
+  relocate(sentimiento_serguridad, covid_positivo:covid_contacto_sintomas,
+           covid_atencion_puesto_salud:covid_conflictos,
+           servicio_agua:servicio_electricidad,
+           muni_recojo_basura, muni_man_parques,
+           contains("alr_")) %>% 
+  mutate(across(1:21, ~case_when(. == 1 ~ "Si", 
+                                 . == 0 ~ "No"))) %>% 
+  relocate(contains("cal_")) %>% 
+  mutate(across(contains("cal_"), ~case_when(
+    . == 1 ~ "Muy malo", 
+    . == 2 ~ "Malo", 
+    . == 3 ~ "Regular", 
+    . == 4 ~ "Bueno", 
+    . == 5 ~ "Muy bueno", 
+  ))) %>% 
+  relocate(contains("tiempo")) %>% 
+  #count(tiempo_comercial) %>% 
+  mutate(across(contains("tiempo"), ~case_when(
+    . == 0 ~ 5.5, 
+    . == 5.5 ~ 15.5,
+    TRUE ~ .
+  ))) %>% 
+  mutate(jefe_ocu = case_when(jefe_ocu == 1 ~ "Trabajador dependiente", 
+                              jefe_ocu == 2 ~ "Trabajador independiente", 
+                              jefe_ocu == 3 ~ "Desempleado",
+                              jefe_ocu == 4 ~ "Otro")) %>% 
+  relocate(where(is.numeric)) %>% 
+  mutate_all(as.character) %>% 
   pivot_longer(!c(id, Distrito)) %>% 
   mutate(variable = case_when(name == "edad" ~ "Edad",
                               name == "genero" ~ "Genero del encuestado",
@@ -79,13 +98,15 @@ df1 <- df %>%
                               name == "jefe_ocu" ~ "Ocupacion del jefe de familia",
                               name == "hogar_ingresos_cuantos" ~ "Cuantos de perciben ingresos en su familia",
                               name == "ingreso_familiar" ~ "Ingreso familiar",
-                              name == "f_menor18" ~ "Composicion familiar - cantidad de menores a 18 anios",
-                              name == "f_hombre" ~ "Composicion familiar - Hombres mayores a 17 anios",
-                              name == "f_mujer" ~ "Composicion familiar - Mujeres mayores a 17 anioes",
+                              name == "f_menor18" ~ "Cantidad de menores a 18 anios",
+                              name == "f_hombre" ~ "Hombres mayores a 17 anios",
+                              name == "f_mujer" ~ "Mujeres mayores a 17 anioes",
                               name == "idiomas" ~ "Idiomas que habla el encuestado",
-                              name == "gasto" ~ "gasto_proxy",
+                              name == "gasto" ~ "Gasto total",
                               TRUE ~ paste0("falta_", name)
                               )) %>% 
   relocate(id, Distrito, name, variable, value) 
-df %>% 
-  count(Distrito, tiempo_comercial)
+
+df1 %>% 
+  mutate(Distrito = "Huancayo metropolitano") %>% 
+  bind_rows(df1) -> df1

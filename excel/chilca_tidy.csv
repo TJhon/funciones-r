@@ -1,0 +1,14 @@
+term,estimate,std.error,statistic,p.value
+(Intercept),-7.0905,2.4305,-2.9173,0.0035
+alr_auxilio_rap,1.1931,0.4659,2.5607,0.0104
+alr_calles_pavimentadas,-1.4277,0.4687,-3.0459,0.0023
+alr_parques_recreativas,1.0557,0.4635,2.2778,0.0227
+cal_servicio_mant_parq,0.3666,0.1975,1.8564,0.0634
+cal_servicio_telefono,0.7394,0.1964,3.7645,2e-4
+covid_desempleo,-2.0462,0.5166,-3.9606,1e-4
+f_mujer,-0.5267,0.1895,-2.7802,0.0054
+idiomas,1.5606,0.3521,4.4316,0
+jefe_ocu,-1.2,0.319,-3.762,2e-4
+sentimiento_serguridad,1.9427,0.4636,4.1908,0
+servicio_agua,2.2894,0.8643,2.6488,0.0081
+servicio_desague,3.3295,1.9349,1.7208,0.0853

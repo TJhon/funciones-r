@@ -1,21 +1,14 @@
 ---
 output:
-  word_document: default
-  html_document: default
   pdf_document: default
+  html_document: default
+  word_document: default
 ---
 
 ```{r, include=F}
 source(here::here("code", "pkg.r"))
 source(here::here("code", "datos.r"))
-source(here::here("code", "fun.r"))
-tab = FALSE
-df1 %>% 
-  filter(str_detect(name, "covid")) %>% 
-  count(name)
-df1 %>% 
-  filter(str_detect(name, "gasto")) %>% 
-  count(variable)
+source(here::here("code", "fun1.r"))
 ```
 
 
@@ -27,63 +20,60 @@ df1 %>%
 
 ```{r}
 df1 %>% 
-  me_fiter(c("edad")) %>% 
-  select(!c(id, variable)) %>% 
-  mutate(rango = cut_width(value, 6)) %>% 
-  group_by(Distrito) %>% 
-  count(rango) %>% 
-  mutate(por = round(n / sum(n) * 100, 2), 
-         por1 = paste0(por, "%")) %>% 
-  select(!c(n, por)) %>% 
-  pivot_wider(names_from = Distrito, values_from = por1) 
+  me_intervalo("edad") %>% 
+  me_pivot("Intervalo de edad") 
 
 df1 %>% 
-  me_fiter(c("edad")) %>% 
-  ggplot() +
-  aes(x = value, fill = Distrito) +#, y = ..density..) +
-  geom_histogram() +
-  facet_wrap(~Distrito, ncol = 2, scales = "free")
+  me_intervalo("edad") %>% 
+  meb_plot("Edad", "Intervalos de 10 anios", pos = "none") 
 ```
 
+Los datos contextuales, presentes en el distrito de Chilca la poblacion se encuentra sobre t8odo en el rango de edad de 20 a 30 anios el cual el porcentaje de la poblacion encuestada es del 74.02%, el segundo porcentaje de la poblacion mas grande es de la poblacion de 10 a 20 anios los cuales representa el 10.68%, la poblacion encuestada de 30 a 40 anios fueron el 9.96%, el resto de la poblacion encuestada esta en el rango de 40 a 60 anios representado 5.24%, y no se encontro poblacion encuestada que tenga la edad entre 60 a 90 anios. Por otro lado en el distrito del Tambo se contro que la poblacion encuestada se encuentra en el rango de edad 20 a 30anios representado el 59%, el otro intervalo de edad mayoritario es del 21.07% el cual son personas entre edades de 10 a 20 anios, y en tercer lugar se encuentra la poblacion que tiene una edad entre 30 a 40 anios representando el 10.92%, y por ultimo la poblacion que esta en el rango de edad de 40 a 70 anios representan el `r 2.11 + 4.98 + 1.92`% mientras que no se encuesto personas con edad de 70 a 80 anios, mientras que en el distrito de Huancayo la poblacion longeva se representa el `r 5.9 + 0.69*2`% estando en el rango de 60 a 90 anios, por otra parte la poblacion encuestada mayoritaria tiene edades entre 20 a 30 anios el cual representa el 56.25%, la otra poblacion mayoritariamente tuvo edades entre 10 y 20 anios representando el 13.19%, y se tiene otro grupo de poblacion que tienen edades entre 30 a 40 anios y representan el 6.6%, por ultimo se encuentra la poblacion que tiene edades entre 40 y 60 anios los cuales representan el `r 9.38 + 7.29`%. Por ultimo Huancayo metropolitano el cual representa a los distritos de Chilca, El Tambo y Huancayo, y como en los anteriores distritos se tiene a la poblacion mayoritaria en el rango de edad de 20 a 30 anios representando el 62.14% de toda la poblacion encuestada, la otra poblacion mayoritaria esta entre el rango de edades de 10 y 20 anios representando el 16.32%, y la tercera poblacion mayoritaria entre edades de 30 y 40 anios entre los rango 9.53%, la poblaicon restante representa el `r 4.4 + 4.77 + 2.47 + 0.18*2`% sus edades son de de 30 a 90 anios de edad.
 
 - genero (bar)
 
 ```{r}
 df1 %>% 
-  vari(var = "genero") %>% 
-  t_vari
+  me_filter("genero") %>% 
+  me_pivot("Genero")
+
 df1 %>% 
-  vari(var = "genero") %>% 
-  b_plot()
-
-
+  me_filter("genero") %>% 
+  meb_plot("Genero", pos = "none")
 ```
 
+La tabla muestra que el genero del distrito de Chilca la poblacion muestra que el genero Hombre fue mayoritario con un 56.58% mientras que la mujeres representan el 43.42%, Chilca es el unico distrito donde se encuentra este comportamiento, mientras que en el distrito del El Tambo tuvo una poblacion encuestada mayoritaria mujer el cual representa el 51.53% del total del distrito, el resto eran varones siendo el 48.47% y el distrito de Huancayo tiene poblacion maoritaria de 51.74% era mujeres meintras que el 48.26% fueron varones, en Huancayo metropolitano estan distribuidos casi uniformemente, ya que casi la mitad son varones (50.5%) y las mujeres representan el 49.5%.
 
 - idiomas (tree)
 
-```{r}
+Segun la encuesta los el numero de idiomas que hablan en el distrito de Chilca, la proporcion que hablan solo un idioma (espanol) son el 52.67%, mientras que los que hablan 2 idiomas son el 40.21%, mientras que las personas que hablan 3 idiomas solo es 2.49%, por ultimo la proporcion que hablan 4 idiomas son el 4.63%, en el Distrito de El Tambo las personas que solo hablan un solo idioma represental el 65.71%, las personas que solo hablan 2 idiomas son el 28.74% del total del distrito, mientras que los uqe hablan 3 y 4 idiomas son el 4.21% y 0.77% respectivamente. Mientras que en el distrito del Huancayo, la poblacion encuestada que habla solo 1 idioma representa el 55.9%, los que hablan 2 idiomas son el 33.68%, mientras que los que solo hablan 3 y 4 idiomas son el 10.07%, y 0.35% respectivamente. Por ultimo en toda la poblacion encuestada en Huancayo metropolitano, las personas que hablan solo un idioma son el 59.76%, las personas que hablan 2 idiomas son el 33%, y los que hablan 3 y 4 idiomas representan el 5.32% y 1.64% respectivamente.
+
+```{r, eval = F}
 df1 %>% 
-  vari(var = "idiomas") %>% 
-  filter(value != "0") %>% 
-  t_vari()
+  me_filter("idiomas") %>% 
+  me_pivot("Numero de idiomas") %>% 
+  filter(`Numero de idiomas` != 0)
 
 df1 %>% 
-  vari(var = "idiomas") %>% 
+  me_filter("idiomas") %>% 
   filter(value != "0") %>% 
-  t_plot() 
+  meb_plot(pos = "none") 
 
 ```
 
 - sentimiento_serguridad (bar)
 
+El sentimiento de seguridad de las personas encuestadas de detala a continuacion, las personas que se sientes seguros viviendo en su barrio del distrito de Chilca muestra que el 70.8% se siente seguro, mientras que solo el 29.18% no se siente seguro, casi el mismo comportamiento se nota en el distrito de El Tambo solo el 27.2% no se sientes seguros y los que se sientes seguros viviendo en su barrio representan el 72.8% del total de encuestados del distrito. En el distrito de Huancayo las personas que no se sienten seguro representan el 25.35% y los que si se sientes seguros son el 74.65%. En toda la muestra se nota que el comportamiento es casi similar al del distrito del El Tambo ya que solo hay una diferencia de 0.02 puntos porcentuales, siendo 27.22% no se sientes seguros, mientras que el 72.78% si se sienten seguros. 
+
 ```{r}
 df1 %>% 
-  vari(var = "sentimiento_serguridad") %>% 
-  t_vari
+  me_filter("sentimiento_serguridad") %>% 
+  me_pivot("Se siente seguro")
+  
 df1 %>% 
-  vari(var = "sentimiento_serguridad") %>% 
-  b_plot()
+  me_filter("sentimiento_serguridad") %>% 
+  meb_plot(pos = "none", "Se siente seguro viviendo en su barrio")
+
 ```
 
 
@@ -91,11 +81,12 @@ df1 %>%
 
 ```{r}
 df1 %>% 
-  vari(var = "satisfaccion") %>% 
-  t_vari
+  me_filter("satisfaccion") %>% 
+  me_pivot("Sentimiento de \nsatisfaccion")
+
 df1 %>% 
-  vari(var = "satisfaccion") %>% 
-  b_plot()
+  me_filter("satisfaccion") %>% 
+  meb_plot(pos = "non", "Satisfaccion", coll = 2, "1 [Poco satisfecho] - 10 [Muy satisfecho]")
 ```
 
 
@@ -108,20 +99,16 @@ df1 %>%
 Los servicios de los encuestados 
 
 ```{r}
-ser <- df1 %>% 
-  filter(str_detect(name, "ser|muni")) %>% 
-  filter(!str_detect(name, "cal_ser")) %>% 
-  group_by(Distrito, variable) %>% 
-  count(value) %>% 
-  mutate(por = round(n / sum(n)*100, 2), 
-         porcentaje = paste0(por, "%")) %>% 
-  ungroup()
-
-ser %>% 
-  select(!c(n, por)) %>% 
-  #group_by()
-  pivot_wider( names_from = value, values_from = porcentaje)
-
+df1 %>% 
+  me_filter("ser|muni") %>% 
+  filter(!str_detect(variable, "[Cc]alidad|seguridad")) %>% 
+  arrange(1, 2) %>% 
+  me_pivot()
+df1 %>% 
+  me_filter("ser|muni") %>% 
+  filter(!str_detect(variable, "[Cc]alidad|seguridad")) %>% 
+  meb_plot(coll = 2) +
+  aes(fill = variable)
 ```
 
 
@@ -133,6 +120,7 @@ ser %>%
 
 ```{r}
 calidad <- df1 %>% 
+  m
   filter(str_detect(name, "cal_")) %>% 
   group_by(Distrito, variable) %>% 
   count(value) %>% 
@@ -141,11 +129,13 @@ calidad <- df1 %>%
          porcentaje = paste0(por, "%")) %>% 
   ungroup()
 
+
+calidad
 calidad %>% 
   select(!c(n, por)) %>% 
   mutate(porcentaje = replace_na(porcentaje, "0%")) %>% 
   #group_by()
-  pivot_wider( names_from = value, values_from = porcentaje)
+  pivot_wider( names_from = Distrito, values_from = porcentaje)
   
 ```
 
@@ -240,7 +230,7 @@ alr %>%
 ## Familia
 
 
-```{r}
+```{r, eval = F}
 df1 %>% 
   vari(var = "jefe_ocu") %>% 
   t_vari
@@ -252,7 +242,7 @@ df1 %>%
 - jefe_ocu
 - hogar_ingresos_cuantos
 
-```{r}
+```{r, eval = F}
 df1 %>% 
   vari(var = "hogar_ingresos_cuantos") %>% 
   t_vari
@@ -296,7 +286,7 @@ El efecto del covid en la poblacion del Distrito metropolitano de Huancayo de lo
 
 El numero de contagios como proporccion del numero de contagios sobre el total de encuestados muestra que Chilca, tuvo 14.9% de los encuestados tuvieron COVID 19, en El tambo el porcentaje de contagios fue del 12.3% mientras que en el Distrito de Huancayo solo el 6.9% fueron casos positivos de COVID 19. Esto se puede visualizar mejor en el grafico subsiguiente donde se distingue
 
-```{r}
+```{r, eval = F}
 df1 %>% 
   vari(var = "covid_positivo") %>% 
   t_vari()
@@ -307,7 +297,7 @@ df1 %>%
 
 Mientras que el porcentaje de los encuestados que se hicieron la prueba para saber si tuvieron o no COVID 19 tuvo un comportamiento diferente al anterior, ya que en el distrito de Chilca el 38.1% de los encuestados afirmaron que se hicieron una prueba para saber si tenian o no COVID 19, mientras que el 61.9% no se hicieron ni recibieron ninguna prueba para detectar COVID 19, mientras que en distrito de El Tambo el porcentaje de los encuestados que se hicieron alguna prueba para saber si tuvieron COVID 19 solo el 33.1% afirmaron que si se hicieron en contraparte los que no se hicieron ninguna ni tampoco recibieron ninguna de las pruebas fueron el 66.9%. Por ultimo en el Distrito de Huancayo es el distrito del cual menos encuestados se hicieron la prueba para COVID 19 siendo el porcentaje de 29.9%, esto se puede visualizar de mejor manera en la subsiguiente figura.
 
-```{r}
+```{r, eval = F}
 df1 %>% 
   vari(var = "covid_prueba") %>% 
   t_vari
@@ -318,7 +308,7 @@ df1 %>%
  
 Por otra parte el porcentaje de los encuestados que presentaron algunos sintomas de los caules son caracteristicos y que mediante estudios avalados por la OMS son propios del COVID 19, son tos congestion o secresion nasal, fatiga, perdidad de sentido del gusto o del olfato y dolor de cabeza o en el pecho, y mediante la encuesta en el distrito de Chilca tuvo el menor de casos con sintomas siendo este solo el 22.8%, en contraparte los que no presentaron sintomas fueron el 77.2%, mientras que el distrito de El Tambo el 23.6% presentaron estos sintomas mientras que el 76.4% no presentaron ninguno de estos sintomas. Por ultimo en el distrito de Huancayo el 25.7% el mayor a nivel distrital mostraron estos sintomas. mientras que el 74.3% de los encuestados no presentaron ninguno de los sintomas del COVID 19 (ver siguiente tabla y figura).
 
-```{r}
+```{r, eval = F}
 df1 %>% 
   vari(var = "covid_sintomas") %>% 
   t_vari
@@ -329,7 +319,7 @@ df1 %>%
 
 Por otra parte se sabe que el virus necesita de un portador humano para poder transmitirse algunos son asintomaticos (no presentan sintomas) y otros si presentan sintomas, y para poder recabar esta informmacion, se tuvieron 2 preguntas, la primera era si se conocia a alguien de la comunidad que estuviese enfermo de coronavirus (estuvo enfermo, tos, dificultad para respirar, etc.), y la segunda si hubo contacto con alguna persona la cual presentaba sintomas propios del coronavirus, por distritos se tiene que para los conocidos en los distritos de Chilca, El Tambo y Huancayo fueron de 69.8%, 68.4%, y 60.8% respectivamente, mientras que los contactos registrados con alguna persona sospechoza de COVID 19 fueron casi la tercera parte, siendo estas para los distritos de Chilca, El Tambo y Huancayo de 27.4% y 28%, y 29.5%, mostrando la preocupacion de tomar algo de distancia con las personas que presenta o presentaron sintomas.
 
-```{r}
+```{r, eval = F}
 df1 %>% 
   vari(var = "covid_conocido_sintomas") %>% 
   t_vari

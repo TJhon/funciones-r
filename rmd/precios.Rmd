@@ -1,0 +1,155 @@
+---
+output: html_document
+---
+
+# Satisfaccion de vida
+
+
+
+# Precios hedonicos
+
+```{r, include=F}
+source(here::here("code", "pkg.r"))
+source(here::here("code", "datos.r"))
+source(here::here("code", "fun1.r"))
+library(broom)
+knitr::opts_chunk$set(
+  results = 'asis', 
+  echo = F, 
+  include = F
+)
+options( scipen= 999)
+library(memisc)
+```
+
+```{r}
+moi_filter <- function(df, var){
+  df %>% 
+    filter(Distrito == case_when(var == "h" ~ "Huancayo",
+                                 var == "c" ~ "Chilca", 
+                                 var == "t" ~ "El Tambo")) %>% 
+    dplyr::select(!Distrito)
+}
+round_df <- function(x, digits) {
+    # round all numeric variables
+    # x: data frame 
+    # digits: number of digits to round
+    numeric_columns <- sapply(x, mode) == 'numeric'
+    x[numeric_columns] <-  round(x[numeric_columns], digits)
+    x
+}
+
+```
+
+
+```{r}
+df4 <- 
+  df %>% 
+  dplyr::select(Distrito, contains(c("alr", "ser", "viv", "cal", "tiempo"))) %>% 
+  mutate(l_vivienda_m2_precio = log(case_when(vivienda_m2_precio == 0 ~ 1,
+                                            TRUE ~ vivienda_m2_precio)),
+         l_vivienda_m2 = log(case_when(vivienda_m2 == 0 ~ 1,
+                                            TRUE ~ vivienda_m2)),
+         l_valoracion_vivienda = log(case_when(valoracion_vivienda == 0 ~ 1, 
+                                               TRUE ~ valoracion_vivienda))) %>% 
+  dplyr::select(!c(valoracion_vivienda))
+
+```
+
+```{r}
+chilca <- df4 %>% 
+  moi_filter(var = "c")
+
+tambo <- df4 %>% 
+  moi_filter("t")
+
+hyo <- df4 %>% 
+  moi_filter("h")
+```
+
+```{r}
+lm(l_valoracion_vivienda ~ ., data = df4) %>% 
+  tidy() %>% 
+  relocate(1, p.value) %>% 
+  arrange(p.value) %>% 
+  round_df(4)
+```
+
+```{r general}
+gen <- 
+  l_valoracion_vivienda ~ vivienda_banos + cal_servicio_seguridad + l_vivienda_m2 + vivienda_banos + vivienda_pisos +
+  l_vivienda_m2_precio + alr_parques_recreativas + cal_servicio_telefono + servicio_agua + cal_servicio_seguridad + alr_parques_recreativas +
+  servicio_agua 
+  
+m1 <- lm(gen, data = df4) 
+m1 %>% 
+  tidy() %>% 
+  arrange(desc(p.value)) %>% 
+  
+  relocate(1, p.value) %>% 
+  round_df(4)
+```
+
+```{r}
+lm(l_vivienda_m2_precio ~ ., data = chilca) %>% 
+  tidy() %>% 
+  arrange(p.value) %>% 
+  round_df(4)
+```
+
+
+```{r chilca}
+gench <- l_valoracion_vivienda ~ l_vivienda_m2 + alr_calles_pavimentadas  +   
+  cal_servicio_electricidad + cal_servicio_telefono + cal_servicio_seguridad +
+  sentimiento_serguridad + cal_servicio_agua + vivienda_banos + cal_servicio_telefono + alr_calles_pavimentadas + 
+  vivienda_pisos + servicio_electricidad
+m2 <- lm(gench, data = chilca) 
+m2 %>% 
+  glance %>% #tidy() %>% 
+  relocate(1,  p.value) %>% 
+  arrange(desc(p.value))
+```
+
+```{r}
+lm(l_valoracion_vivienda ~ ., data = tambo) %>% 
+  tidy() %>% 
+  arrange(p.value)
+```
+
+```{r tambo}
+gentam <- l_valoracion_vivienda ~ l_vivienda_m2 + cal_servicio_mant_parq + cal_servicio_basura +
+  alr_zonas_verdes + cal_servicio_telefono + cal_servicio_seguridad + 
+  servicio_internet + vivienda_pisos + vivienda_banos +
+  cal_servicio_agua + alr_auxilio_rap + servicio_electricidad 
+m3 <- lm(gentam, data = tambo)  
+m3 %>%   tidy() %>% 
+  arrange(desc(p.value)) %>% 
+  round_df(4) %>% 
+  relocate(1, p.value)
+```
+
+```{r}
+lm(l_valoracion_vivienda ~ ., data = hyo) %>% 
+  tidy() %>% 
+  round_df(4) %>% 
+  relocate(1, p.value) %>% 
+  arrange(p.value)
+```
+
+```{r hyo}
+genhyo <- l_valoracion_vivienda ~ l_vivienda_m2 + alr_parques_recreativas  + cal_servicio_internet + vivienda_banos + servicio_internet +
+  cal_servicio_seguridad + alr_zonas_verdes + cal_servicio_agua + vivienda_cuartos + cal_servicio_basura
+
+m4 <- lm(genhyo, data = hyo) 
+m4 %>% 
+  tidy() %>% 
+  round_df(4) %>% 
+  relocate(1, p.value) %>% 
+  arrange(desc(p.value))
+```
+
+```{r, include=T}
+stargazer::stargazer(m1, m2, m3, m4, type = "html", 
+                     single.row = T, column.labels = c("General", "Chilca", "El Tambo", "Huancayo"))
+```
+
